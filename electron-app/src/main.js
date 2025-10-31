@@ -173,6 +173,12 @@ function runAutomation(dryRun) {
     const scriptPath = path.join(basePath, 'src/index.js');
     const args = dryRun ? ['--dry-run'] : [];
 
+    console.log('[AUTOMATION]:', 'Starting automation process');
+    console.log('[AUTOMATION]:', 'Base path:', basePath);
+    console.log('[AUTOMATION]:', 'Script path:', scriptPath);
+    console.log('[AUTOMATION]:', 'Executable:', process.execPath);
+    console.log('[AUTOMATION]:', 'Dry run:', dryRun);
+
     // Use process.execPath to get the bundled Node/Electron executable
     // This ensures the app works when packaged without requiring 'node' in PATH
     automationProcess = spawn(process.execPath, [scriptPath, ...args], {
@@ -188,16 +194,26 @@ function runAutomation(dryRun) {
     automationProcess.stdout.on('data', (data) => {
       const message = data.toString();
       output += message;
+      console.log('[AUTOMATION STDOUT]:', message);
       mainWindow.webContents.send('automation-log', message);
     });
 
     automationProcess.stderr.on('data', (data) => {
       const message = data.toString();
       output += message;
-      mainWindow.webContents.send('automation-log', message);
+      console.error('[AUTOMATION STDERR]:', message);
+      mainWindow.webContents.send('automation-log', `[ERROR] ${message}`);
+    });
+
+    automationProcess.on('error', (error) => {
+      const message = `Process error: ${error.message}`;
+      output += message;
+      console.error('[AUTOMATION ERROR]:', error);
+      mainWindow.webContents.send('automation-log', `[ERROR] ${message}`);
     });
 
     automationProcess.on('close', (code) => {
+      console.log('[AUTOMATION]:', `Process exited with code ${code}`);
       automationProcess = null;
       mainWindow.webContents.send('automation-complete', { code, output });
     });
