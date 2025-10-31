@@ -1,0 +1,44 @@
+contacts_csv: ./contacts.csv
+message_template: ""
+image_path: /Users/ariben-elazar/go/src/github.com/abenelazar/whatsapp-automation/lech-lecha.jpg
+image_caption: |
+  🔥 SHABBAT LECH LECHA – The Journey Begins
+
+  Hello {{name}}, how are you? This Saturday morning in Kips Bay, it's time to follow in Avraham's footsteps (don't worry, no desert walking required 😄).
+
+  Meaning, connection, and great vibes await. 🍹
+
+  ✨ Free participation
+
+  📲 RSVP:
+  https://wa.me/15102168856?text=Hi%20Yehouda%2C%20I%20would%20like%20to%20join%20for%20Shabbat%20morning%20Lech%20Lecha
+
+rate_limit: 1
+logging:
+  level: info
+  file: ./whatsapp-automation.log
+  console: true
+session_dir: ./whatsapp-session
+state_file: ./sent_messages.json
+retry:
+  max_attempts: 3
+  initial_delay_ms: 1000
+  max_delay_ms: 10000
+  backoff_multiplier: 2
+timeouts:
+  page_load: 60000
+  message_send: 30000
+  element_wait: 10000
+screenshots:
+  enabled: true
+  dir: ./screenshots
+puppeteer:
+  headless: false
+  args:
+    - --no-sandbox
+    - --disable-setuid-sandbox
+    - --disable-dev-shm-usage
+    - --disable-accelerated-2d-canvas
+    - --no-first-run
+    - --no-zygote
+    - --disable-gpu

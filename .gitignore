@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Session data
+whatsapp-session/
+
+# State files
+sent_messages.json
+
+# Logs
+*.log
+logs/
+
+# Screenshots
+screenshots/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Personal data
+contacts.csv
+message_template.txt
+
+# Keep example files
+!contacts.example.csv
+!message_template.example.txt

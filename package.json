@@ -1,0 +1,25 @@
+{
+  "name": "whatsapp-automation-tool",
+  "version": "1.0.0",
+  "description": "Complete WhatsApp automation tool with Puppeteer, CSV support, and comprehensive features",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dry-run": "node src/index.js --dry-run"
+  },
+  "keywords": [
+    "whatsapp",
+    "automation",
+    "puppeteer",
+    "messaging"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^22.0.0",
+    "csv-parse": "^5.5.6",
+    "yaml": "^2.4.2",
+    "winston": "^3.13.0"
+  }
+}

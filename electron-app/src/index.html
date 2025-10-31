@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Automation Tool</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📱 WhatsApp Automation Tool</h1>
+      <p>Automate personalized WhatsApp messages with ease</p>
+    </header>
+
+    <div class="content">
+      <!-- Configuration Section -->
+      <section class="config-section">
+        <h2>Configuration</h2>
+
+        <div class="form-group">
+          <label>Contacts CSV File</label>
+          <div class="file-input">
+            <input type="text" id="csvPath" readonly placeholder="Select CSV file...">
+            <button id="selectCsv" class="btn-secondary">Browse</button>
+          </div>
+          <div id="csvPreview" class="preview"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Message Template File</label>
+          <div class="file-input">
+            <input type="text" id="templatePath" readonly placeholder="Select template file...">
+            <button id="selectTemplate" class="btn-secondary">Browse</button>
+          </div>
+          <div id="templatePreview" class="preview"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Image (Optional)</label>
+          <div class="file-input">
+            <input type="text" id="imagePath" readonly placeholder="No image selected">
+            <button id="selectImage" class="btn-secondary">Browse</button>
+            <button id="clearImage" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Image Caption (Optional)</label>
+          <input type="text" id="imageCaption" placeholder="Use {{field}} for personalization">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Rate Limit (messages/second)</label>
+            <input type="number" id="rateLimit" min="0.1" max="10" step="0.1" value="1">
+          </div>
+
+          <div class="form-group">
+            <label>Log Level</label>
+            <select id="logLevel">
+              <option value="debug">Debug</option>
+              <option value="info" selected>Info</option>
+              <option value="warn">Warning</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="saveConfig" class="btn-secondary">💾 Save Configuration</button>
+          <button id="loadConfig" class="btn-secondary">📂 Load Configuration</button>
+        </div>
+      </section>
+
+      <!-- Actions Section -->
+      <section class="actions-section">
+        <h2>Actions</h2>
+
+        <div class="button-grid">
+          <button id="runDryRun" class="btn-primary">
+            🧪 Dry Run
+            <span class="btn-hint">Test without sending</span>
+          </button>
+
+          <button id="runAutomation" class="btn-success">
+            🚀 Run Automation
+            <span class="btn-hint">Send messages</span>
+          </button>
+
+          <button id="stopAutomation" class="btn-danger" disabled>
+            ⏹️ Stop
+            <span class="btn-hint">Cancel running process</span>
+          </button>
+
+          <button id="clearState" class="btn-warning">
+            🗑️ Clear State
+            <span class="btn-hint">Reset sent messages tracking</span>
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-box">
+          <h3>Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="stat-value" id="statMessages">0</div>
+              <div class="stat-label">Messages Sent</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" id="statContacts">0</div>
+              <div class="stat-label">Unique Contacts</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" id="statUpdated">Never</div>
+              <div class="stat-label">Last Updated</div>
+            </div>
+          </div>
+          <button id="refreshStats" class="btn-secondary btn-small">🔄 Refresh</button>
+        </div>
+      </section>
+
+      <!-- Console Output Section -->
+      <section class="console-section">
+        <h2>Console Output</h2>
+        <div id="console" class="console"></div>
+        <button id="clearConsole" class="btn-secondary btn-small">Clear Console</button>
+      </section>
+    </div>
+
+    <footer>
+      <p>WhatsApp Automation Tool v1.0 | Built with Electron</p>
+    </footer>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
