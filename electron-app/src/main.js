@@ -244,9 +244,44 @@ async function runAutomation(dryRun) {
     console.log('[AUTOMATION]:', 'Environment variables set:', Object.keys(env).filter(k => k.startsWith('ELECTRON') || k.startsWith('PUPPETEER') || k.startsWith('NODE')));
     mainWindow.webContents.send('automation-log', `Spawning process...\n`);
 
-    // Use process.execPath to get the bundled Node/Electron executable
-    // This ensures the app works when packaged without requiring 'node' in PATH
-    automationProcess = spawn(process.execPath, [scriptPath, ...args], {
+    // Try to find Node.js executable
+    let nodeExecutable = process.execPath;
+    let useElectron = true;
+
+    // On Windows, try to find node.exe in common locations
+    if (process.platform === 'win32') {
+      const possibleNodePaths = [
+        'C:\\Program Files\\nodejs\\node.exe',
+        'C:\\Program Files (x86)\\nodejs\\node.exe',
+        path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'nodejs', 'node.exe'),
+        path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'nodejs', 'node.exe'),
+      ];
+
+      for (const nodePath of possibleNodePaths) {
+        try {
+          await fs.promises.access(nodePath);
+          nodeExecutable = nodePath;
+          useElectron = false;
+          console.log('[AUTOMATION]:', 'Found Node.js at:', nodePath);
+          mainWindow.webContents.send('automation-log', `Using Node.js: ${nodePath}\n`);
+          break;
+        } catch (err) {
+          // Continue searching
+        }
+      }
+    }
+
+    if (useElectron) {
+      console.log('[AUTOMATION]:', 'Using Electron as Node.js');
+      mainWindow.webContents.send('automation-log', `Using Electron as Node.js\n`);
+      env.ELECTRON_RUN_AS_NODE = '1';
+    } else {
+      // Don't need ELECTRON_RUN_AS_NODE if using actual Node.js
+      delete env.ELECTRON_RUN_AS_NODE;
+    }
+
+    // Spawn the automation process
+    automationProcess = spawn(nodeExecutable, [scriptPath, ...args], {
       cwd: basePath,
       env
     });
