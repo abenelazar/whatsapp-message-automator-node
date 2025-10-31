@@ -173,8 +173,14 @@ function runAutomation(dryRun) {
     const scriptPath = path.join(basePath, 'src/index.js');
     const args = dryRun ? ['--dry-run'] : [];
 
-    automationProcess = spawn('node', [scriptPath, ...args], {
-      cwd: basePath
+    // Use process.execPath to get the bundled Node/Electron executable
+    // This ensures the app works when packaged without requiring 'node' in PATH
+    automationProcess = spawn(process.execPath, [scriptPath, ...args], {
+      cwd: basePath,
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: '1' // Run Electron as Node.js
+      }
     });
 
     let output = '';
