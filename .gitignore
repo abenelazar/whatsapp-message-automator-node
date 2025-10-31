@@ -35,8 +35,5 @@ message_template.txt
 !contacts.example.csv
 !message_template.example.txt
 
-# Build artifacts - keep only installers
-electron-app/dist/win-unpacked/
-electron-app/dist/mac/
-electron-app/dist/linux-unpacked/
-electron-app/dist/builder-debug.yml
+# Build artifacts - exclude all dist files (use GitHub Releases instead)
+electron-app/dist/
