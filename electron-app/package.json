@@ -81,7 +81,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "WhatsApp Automation",
-      "differentialPackage": false
+      "differentialPackage": false,
+      "guid": "a8b9c0d1-e2f3-4567-8901-23456789abcd"
     },
     "compression": "normal",
     "mac": {
