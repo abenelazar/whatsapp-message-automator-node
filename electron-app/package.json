@@ -5,16 +5,80 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
   },
   "keywords": [
     "whatsapp",
     "automation",
     "electron"
   ],
-  "author": "",
+  "author": "WhatsApp Automation",
   "license": "MIT",
+  "build": {
+    "appId": "com.whatsapp.automation",
+    "productName": "WhatsApp Automation",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../src",
+        "to": "app/src",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../config.yaml",
+        "to": "app/config.yaml"
+      },
+      {
+        "from": "../contacts.csv",
+        "to": "app/contacts.csv"
+      },
+      {
+        "from": "../message_template.txt",
+        "to": "app/message_template.txt"
+      },
+      {
+        "from": "../package.json",
+        "to": "app/package.json"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WhatsApp Automation"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Utility"
+    }
+  },
   "dependencies": {
     "electron": "^28.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.0.12"
   }
 }

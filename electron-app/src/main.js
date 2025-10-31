@@ -7,6 +7,17 @@ const { spawn } = require('child_process');
 let mainWindow;
 let automationProcess = null;
 
+// Helper to get the correct base path for resources
+function getBasePath() {
+  if (app.isPackaged) {
+    // In production, resources are in the app.asar/resources/app folder
+    return path.join(process.resourcesPath, 'app');
+  } else {
+    // In development, go up one level from electron-app/src
+    return path.join(__dirname, '../..');
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1600,
@@ -14,8 +25,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
-    },
-    icon: path.join(__dirname, '../icon.png')
+    }
   });
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
@@ -48,7 +58,7 @@ app.on('activate', () => {
 // Load config
 ipcMain.handle('load-config', async () => {
   try {
-    const configPath = path.join(__dirname, '../../config.yaml');
+    const configPath = path.join(getBasePath(), 'config.yaml');
     const configFile = await fs.promises.readFile(configPath, 'utf-8');
     const config = YAML.parse(configFile);
     return { success: true, config };
@@ -60,7 +70,7 @@ ipcMain.handle('load-config', async () => {
 // Save config
 ipcMain.handle('save-config', async (event, config) => {
   try {
-    const configPath = path.join(__dirname, '../../config.yaml');
+    const configPath = path.join(getBasePath(), 'config.yaml');
     const yamlContent = YAML.stringify(config);
     await fs.promises.writeFile(configPath, yamlContent, 'utf-8');
     return { success: true };
@@ -159,11 +169,12 @@ function runAutomation(dryRun) {
       return;
     }
 
-    const scriptPath = path.join(__dirname, '../../src/index.js');
+    const basePath = getBasePath();
+    const scriptPath = path.join(basePath, 'src/index.js');
     const args = dryRun ? ['--dry-run'] : [];
 
     automationProcess = spawn('node', [scriptPath, ...args], {
-      cwd: path.join(__dirname, '../..')
+      cwd: basePath
     });
 
     let output = '';
@@ -192,7 +203,7 @@ function runAutomation(dryRun) {
 // Get stats
 ipcMain.handle('get-stats', async () => {
   try {
-    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateFilePath = path.join(getBasePath(), 'sent_messages.json');
 
     try {
       await fs.promises.access(stateFilePath);
@@ -228,7 +239,7 @@ ipcMain.handle('get-stats', async () => {
 // Clear state
 ipcMain.handle('clear-state', async () => {
   try {
-    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateFilePath = path.join(getBasePath(), 'sent_messages.json');
     await fs.promises.unlink(stateFilePath);
     return { success: true };
   } catch (error) {
@@ -242,7 +253,7 @@ ipcMain.handle('clear-state', async () => {
 // Get sent messages
 ipcMain.handle('get-sent-messages', async () => {
   try {
-    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateFilePath = path.join(getBasePath(), 'sent_messages.json');
 
     try {
       await fs.promises.access(stateFilePath);
@@ -269,7 +280,7 @@ ipcMain.handle('get-sent-messages', async () => {
 // Delete sent message
 ipcMain.handle('delete-sent-message', async (event, messageHash) => {
   try {
-    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateFilePath = path.join(getBasePath(), 'sent_messages.json');
     const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
     const state = JSON.parse(stateContent);
 
@@ -295,7 +306,7 @@ ipcMain.handle('delete-sent-message', async (event, messageHash) => {
 // Delete multiple sent messages
 ipcMain.handle('delete-sent-messages', async (event, messageHashes) => {
   try {
-    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateFilePath = path.join(getBasePath(), 'sent_messages.json');
     const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
     const state = JSON.parse(stateContent);
 
@@ -331,7 +342,7 @@ ipcMain.handle('export-sent-messages', async () => {
     });
 
     if (!result.canceled && result.filePath) {
-      const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+      const stateFilePath = path.join(getBasePath(), 'sent_messages.json');
       const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
       await fs.promises.writeFile(result.filePath, stateContent, 'utf-8');
       return { success: true, path: result.filePath };
