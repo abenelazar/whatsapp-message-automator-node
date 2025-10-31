@@ -24,11 +24,19 @@ export class WhatsAppAutomation {
     await fs.mkdir(this.config.session_dir, { recursive: true });
 
     // Launch browser
-    this.browser = await puppeteer.launch({
+    const launchOptions = {
       headless: this.config.puppeteer.headless,
       args: this.config.puppeteer.args,
       userDataDir: this.config.session_dir
-    });
+    };
+
+    // Use Electron's Chromium if running from Electron app
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      this.logger.info(`Using Chromium from: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+    }
+
+    this.browser = await puppeteer.launch(launchOptions);
 
     this.page = await this.browser.newPage();
 

@@ -185,7 +185,8 @@ function runAutomation(dryRun) {
       cwd: basePath,
       env: {
         ...process.env,
-        ELECTRON_RUN_AS_NODE: '1' // Run Electron as Node.js
+        ELECTRON_RUN_AS_NODE: '1', // Run Electron as Node.js
+        PUPPETEER_EXECUTABLE_PATH: process.execPath // Use Electron's Chromium
       }
     });
 
