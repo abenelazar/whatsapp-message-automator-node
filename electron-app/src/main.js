@@ -107,6 +107,21 @@ ipcMain.handle('select-image', async () => {
   return { success: false };
 });
 
+// Select Chrome/Chromium executable
+ipcMain.handle('select-chrome', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Executables', extensions: process.platform === 'win32' ? ['exe'] : ['app', '*'] }
+    ]
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return { success: true, path: result.filePaths[0] };
+  }
+  return { success: false };
+});
+
 // Select template file
 ipcMain.handle('select-template', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -162,8 +177,8 @@ ipcMain.handle('stop-automation', async () => {
 });
 
 // Helper function to run automation
-function runAutomation(dryRun) {
-  return new Promise((resolve) => {
+async function runAutomation(dryRun) {
+  return new Promise(async (resolve) => {
     if (automationProcess) {
       resolve({ success: false, error: 'Automation already running' });
       return;
@@ -179,15 +194,38 @@ function runAutomation(dryRun) {
     console.log('[AUTOMATION]:', 'Executable:', process.execPath);
     console.log('[AUTOMATION]:', 'Dry run:', dryRun);
 
+    // Load config to check for custom Chrome path
+    let chromePath = undefined; // Let Puppeteer find Chrome/Chromium by default
+    try {
+      const configPath = path.join(basePath, 'config.yaml');
+      const configFile = await fs.promises.readFile(configPath, 'utf-8');
+      const config = YAML.parse(configFile);
+      if (config.chrome_executable_path) {
+        chromePath = config.chrome_executable_path;
+        console.log('[AUTOMATION]:', 'Using custom Chrome path:', chromePath);
+      } else {
+        console.log('[AUTOMATION]:', 'Using system Chrome/Chromium (auto-detect)');
+      }
+    } catch (error) {
+      console.log('[AUTOMATION]:', 'Could not load config, will auto-detect Chrome:', error.message);
+    }
+
+    // Build environment variables
+    const env = {
+      ...process.env,
+      ELECTRON_RUN_AS_NODE: '1' // Run Electron as Node.js
+    };
+
+    // Only set PUPPETEER_EXECUTABLE_PATH if a custom Chrome path is configured
+    if (chromePath) {
+      env.PUPPETEER_EXECUTABLE_PATH = chromePath;
+    }
+
     // Use process.execPath to get the bundled Node/Electron executable
     // This ensures the app works when packaged without requiring 'node' in PATH
     automationProcess = spawn(process.execPath, [scriptPath, ...args], {
       cwd: basePath,
-      env: {
-        ...process.env,
-        ELECTRON_RUN_AS_NODE: '1', // Run Electron as Node.js
-        PUPPETEER_EXECUTABLE_PATH: process.execPath // Use Electron's Chromium
-      }
+      env
     });
 
     let output = '';

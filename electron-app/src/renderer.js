@@ -5,6 +5,7 @@ const csvPath = document.getElementById('csvPath');
 const templatePath = document.getElementById('templatePath');
 const imagePath = document.getElementById('imagePath');
 const imageCaption = document.getElementById('imageCaption');
+const chromePath = document.getElementById('chromePath');
 const rateLimit = document.getElementById('rateLimit');
 const logLevel = document.getElementById('logLevel');
 
@@ -12,6 +13,8 @@ const selectCsv = document.getElementById('selectCsv');
 const selectTemplate = document.getElementById('selectTemplate');
 const selectImage = document.getElementById('selectImage');
 const clearImage = document.getElementById('clearImage');
+const selectChrome = document.getElementById('selectChrome');
+const clearChrome = document.getElementById('clearChrome');
 
 const saveConfig = document.getElementById('saveConfig');
 const loadConfig = document.getElementById('loadConfig');
@@ -76,6 +79,17 @@ selectImage.addEventListener('click', async () => {
 clearImage.addEventListener('click', () => {
   imagePath.value = '';
   imageCaption.value = '';
+});
+
+selectChrome.addEventListener('click', async () => {
+  const result = await ipcRenderer.invoke('select-chrome');
+  if (result.success) {
+    chromePath.value = result.path;
+  }
+});
+
+clearChrome.addEventListener('click', () => {
+  chromePath.value = '';
 });
 
 saveConfig.addEventListener('click', async () => {
@@ -220,6 +234,7 @@ async function loadConfigFromFile() {
     templatePath.value = config.message_template || '';
     imagePath.value = config.image_path || '';
     imageCaption.value = config.image_caption || '';
+    chromePath.value = config.chrome_executable_path || '';
     rateLimit.value = config.rate_limit || 1;
     logLevel.value = config.logging?.level || 'info';
 
@@ -240,6 +255,7 @@ function getConfigFromUI() {
     message_template: templatePath.value,
     image_path: imagePath.value || undefined,
     image_caption: imageCaption.value || undefined,
+    chrome_executable_path: chromePath.value || undefined,
     rate_limit: parseFloat(rateLimit.value),
     logging: {
       level: logLevel.value,

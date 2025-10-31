@@ -9,7 +9,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>📱 WhatsApp Automation Tool</h1>
+      <h1>📱 WhatsApp Automation Tool <span style="font-size: 0.5em; opacity: 0.7;">v1.0.5</span></h1>
       <p>Automate personalized WhatsApp messages with ease</p>
     </header>
 
@@ -48,6 +48,18 @@
         <div class="form-group">
           <label>Image Caption (Optional)</label>
           <textarea id="imageCaption" rows="4" placeholder="Use {{field}} for personalization&#10;Supports multiple lines&#10;Press Enter for line breaks"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Chrome/Chromium Path (Optional - leave blank for auto-detect)</label>
+          <div class="file-input">
+            <input type="text" id="chromePath" placeholder="Auto-detect system Chrome/Chromium">
+            <button id="selectChrome" class="btn-secondary">Browse</button>
+            <button id="clearChrome" class="btn-secondary">Clear</button>
+          </div>
+          <small style="color: #666; font-size: 11px; display: block; margin-top: 5px;">
+            App will auto-detect Chrome/Chromium on your system. Common paths: C:\Program Files\Google\Chrome\Application\chrome.exe (Windows) | /Applications/Google Chrome.app/Contents/MacOS/Google Chrome (Mac)
+          </small>
         </div>
 
         <div class="form-row">

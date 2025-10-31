@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-automation-electron",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "Electron UI for WhatsApp Automation Tool",
   "main": "src/main.js",
   "scripts": {
