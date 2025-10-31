@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
@@ -43,7 +43,7 @@ header p {
 .content {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
   grid-template-rows: auto auto;
 }
@@ -80,6 +80,13 @@ section h2 {
   flex-direction: column;
 }
 
+.sent-messages-section {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -93,18 +100,26 @@ section h2 {
 
 .form-group input[type="text"],
 .form-group input[type="number"],
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 10px;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 14px;
   transition: border-color 0.3s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #667eea;
 }
@@ -342,6 +357,149 @@ footer {
 footer p {
   font-size: 0.9rem;
   opacity: 0.9;
+}
+
+/* Sent Messages Section */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.sent-messages-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.sent-messages-controls input[type="text"] {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.sent-messages-controls input[type="text"]:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.message-count {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.message-count span {
+  color: #667eea;
+  font-weight: bold;
+}
+
+.sent-messages-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 600px;
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fafafa;
+}
+
+.message-item {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+
+.message-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.message-item.selected {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.message-contact {
+  flex: 1;
+}
+
+.message-contact-name {
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.message-contact-phone {
+  color: #666;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.message-contact-company {
+  color: #667eea;
+  font-size: 12px;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.message-timestamp {
+  font-size: 11px;
+  color: #999;
+}
+
+.message-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.message-actions button {
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.message-hash {
+  font-size: 10px;
+  color: #999;
+  font-family: monospace;
+  margin-top: 5px;
+  word-break: break-all;
+}
+
+.sent-messages-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.no-messages {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-style: italic;
 }
 
 /* Scrollbar styling */

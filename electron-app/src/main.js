@@ -9,8 +9,8 @@ let automationProcess = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1600,
+    height: 900,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -235,6 +235,110 @@ ipcMain.handle('clear-state', async () => {
     if (error.code === 'ENOENT') {
       return { success: true }; // File doesn't exist, that's fine
     }
+    return { success: false, error: error.message };
+  }
+});
+
+// Get sent messages
+ipcMain.handle('get-sent-messages', async () => {
+  try {
+    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+
+    try {
+      await fs.promises.access(stateFilePath);
+      const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
+      const state = JSON.parse(stateContent);
+
+      return {
+        success: true,
+        messages: state.sentMessages || {},
+        lastUpdated: state.lastUpdated
+      };
+    } catch {
+      return {
+        success: true,
+        messages: {},
+        lastUpdated: null
+      };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Delete sent message
+ipcMain.handle('delete-sent-message', async (event, messageHash) => {
+  try {
+    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
+    const state = JSON.parse(stateContent);
+
+    if (state.sentMessages && state.sentMessages[messageHash]) {
+      delete state.sentMessages[messageHash];
+      state.lastUpdated = new Date().toISOString();
+
+      await fs.promises.writeFile(
+        stateFilePath,
+        JSON.stringify(state, null, 2),
+        'utf-8'
+      );
+
+      return { success: true };
+    }
+
+    return { success: false, error: 'Message not found' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Delete multiple sent messages
+ipcMain.handle('delete-sent-messages', async (event, messageHashes) => {
+  try {
+    const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+    const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
+    const state = JSON.parse(stateContent);
+
+    let deletedCount = 0;
+    for (const hash of messageHashes) {
+      if (state.sentMessages && state.sentMessages[hash]) {
+        delete state.sentMessages[hash];
+        deletedCount++;
+      }
+    }
+
+    if (deletedCount > 0) {
+      state.lastUpdated = new Date().toISOString();
+      await fs.promises.writeFile(
+        stateFilePath,
+        JSON.stringify(state, null, 2),
+        'utf-8'
+      );
+    }
+
+    return { success: true, deletedCount };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Export sent messages
+ipcMain.handle('export-sent-messages', async () => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      defaultPath: `whatsapp-sent-messages-${Date.now()}.json`,
+      filters: [{ name: 'JSON Files', extensions: ['json'] }]
+    });
+
+    if (!result.canceled && result.filePath) {
+      const stateFilePath = path.join(__dirname, '../../sent_messages.json');
+      const stateContent = await fs.promises.readFile(stateFilePath, 'utf-8');
+      await fs.promises.writeFile(result.filePath, stateContent, 'utf-8');
+      return { success: true, path: result.filePath };
+    }
+
+    return { success: false, error: 'Export canceled' };
+  } catch (error) {
     return { success: false, error: error.message };
   }
 });

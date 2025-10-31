@@ -32,9 +32,21 @@ const statContacts = document.getElementById('statContacts');
 const statUpdated = document.getElementById('statUpdated');
 const refreshStats = document.getElementById('refreshStats');
 
+const sentMessagesList = document.getElementById('sentMessagesList');
+const searchMessages = document.getElementById('searchMessages');
+const messageCount = document.getElementById('messageCount');
+const refreshSentMessages = document.getElementById('refreshSentMessages');
+const deleteSelected = document.getElementById('deleteSelected');
+const exportMessages = document.getElementById('exportMessages');
+
+// State
+let allMessages = {};
+let selectedMessages = new Set();
+
 // Initialize
 loadConfigFromFile();
 updateStats();
+loadSentMessages();
 
 // Event Listeners
 
@@ -143,6 +155,42 @@ refreshStats.addEventListener('click', () => {
   updateStats();
 });
 
+refreshSentMessages.addEventListener('click', () => {
+  loadSentMessages();
+});
+
+searchMessages.addEventListener('input', (e) => {
+  filterMessages(e.target.value);
+});
+
+deleteSelected.addEventListener('click', async () => {
+  if (selectedMessages.size === 0) return;
+
+  const confirmed = confirm(`Delete ${selectedMessages.size} selected message(s)?`);
+  if (!confirmed) return;
+
+  const result = await ipcRenderer.invoke('delete-sent-messages', Array.from(selectedMessages));
+
+  if (result.success) {
+    log(`🗑️ Deleted ${result.deletedCount} message(s)`, 'success');
+    selectedMessages.clear();
+    await loadSentMessages();
+    await updateStats();
+  } else {
+    log(`❌ Failed to delete messages: ${result.error}`, 'error');
+  }
+});
+
+exportMessages.addEventListener('click', async () => {
+  const result = await ipcRenderer.invoke('export-sent-messages');
+
+  if (result.success) {
+    log(`💾 Messages exported to ${result.path}`, 'success');
+  } else {
+    log(`❌ Export failed: ${result.error}`, 'error');
+  }
+});
+
 // IPC Listeners
 
 ipcRenderer.on('automation-log', (event, message) => {
@@ -157,6 +205,7 @@ ipcRenderer.on('automation-complete', (event, data) => {
     log(`❌ Automation failed with code ${data.code}`, 'error');
   }
   updateStats();
+  loadSentMessages();
 });
 
 // Helper Functions
@@ -284,4 +333,142 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+async function loadSentMessages() {
+  const result = await ipcRenderer.invoke('get-sent-messages');
+
+  if (result.success) {
+    allMessages = result.messages;
+    renderMessages(allMessages);
+    updateMessageCount(Object.keys(allMessages).length);
+  } else {
+    log(`❌ Failed to load sent messages: ${result.error}`, 'error');
+  }
+}
+
+function renderMessages(messages) {
+  const messagesArray = Object.entries(messages).map(([hash, msg]) => ({
+    hash,
+    ...msg
+  }));
+
+  // Sort by timestamp (newest first)
+  messagesArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  if (messagesArray.length === 0) {
+    sentMessagesList.innerHTML = '<div class="no-messages">No messages sent yet</div>';
+    deleteSelected.disabled = true;
+    return;
+  }
+
+  sentMessagesList.innerHTML = messagesArray.map(msg => createMessageElement(msg)).join('');
+
+  // Add click handlers
+  sentMessagesList.querySelectorAll('.message-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn-danger')) return; // Don't toggle if clicking delete
+      toggleMessageSelection(item.dataset.hash);
+    });
+  });
+
+  // Add delete button handlers
+  sentMessagesList.querySelectorAll('.delete-single').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const hash = btn.dataset.hash;
+      const confirmed = confirm('Delete this message?');
+      if (!confirmed) return;
+
+      const result = await ipcRenderer.invoke('delete-sent-message', hash);
+      if (result.success) {
+        log('🗑️ Message deleted', 'success');
+        await loadSentMessages();
+        await updateStats();
+      } else {
+        log(`❌ Failed to delete: ${result.error}`, 'error');
+      }
+    });
+  });
+
+  updateDeleteButtonState();
+}
+
+function createMessageElement(msg) {
+  const timestamp = new Date(msg.timestamp).toLocaleString();
+  const contact = msg.contact || {};
+  const isSelected = selectedMessages.has(msg.hash);
+
+  return `
+    <div class="message-item ${isSelected ? 'selected' : ''}" data-hash="${msg.hash}">
+      <div class="message-header">
+        <div class="message-contact">
+          <div class="message-contact-name">${escapeHtml(contact.name || 'Unknown')}</div>
+          <div class="message-contact-phone">${escapeHtml(msg.phone)}</div>
+          ${contact.company ? `<div class="message-contact-company">${escapeHtml(contact.company)}</div>` : ''}
+        </div>
+        <div class="message-actions">
+          <div class="message-timestamp">${timestamp}</div>
+          <button class="btn-danger delete-single" data-hash="${msg.hash}">🗑️</button>
+        </div>
+      </div>
+      <div class="message-hash">Hash: ${msg.hash.substring(0, 16)}...</div>
+    </div>
+  `;
+}
+
+function toggleMessageSelection(hash) {
+  if (selectedMessages.has(hash)) {
+    selectedMessages.delete(hash);
+  } else {
+    selectedMessages.add(hash);
+  }
+
+  // Update UI
+  const item = sentMessagesList.querySelector(`[data-hash="${hash}"]`);
+  if (item) {
+    item.classList.toggle('selected');
+  }
+
+  updateDeleteButtonState();
+}
+
+function updateDeleteButtonState() {
+  deleteSelected.disabled = selectedMessages.size === 0;
+  if (selectedMessages.size > 0) {
+    deleteSelected.textContent = `🗑️ Delete Selected (${selectedMessages.size})`;
+  } else {
+    deleteSelected.textContent = '🗑️ Delete Selected';
+  }
+}
+
+function updateMessageCount(count) {
+  messageCount.textContent = count;
+}
+
+function filterMessages(searchTerm) {
+  if (!searchTerm.trim()) {
+    renderMessages(allMessages);
+    return;
+  }
+
+  const term = searchTerm.toLowerCase();
+  const filtered = {};
+
+  for (const [hash, msg] of Object.entries(allMessages)) {
+    const contact = msg.contact || {};
+    const searchableText = [
+      msg.phone,
+      contact.name,
+      contact.company,
+      contact.position
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    if (searchableText.includes(term)) {
+      filtered[hash] = msg;
+    }
+  }
+
+  renderMessages(filtered);
+  updateMessageCount(Object.keys(filtered).length);
 }

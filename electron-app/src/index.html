@@ -47,7 +47,7 @@
 
         <div class="form-group">
           <label>Image Caption (Optional)</label>
-          <input type="text" id="imageCaption" placeholder="Use {{field}} for personalization">
+          <textarea id="imageCaption" rows="4" placeholder="Use {{field}} for personalization&#10;Supports multiple lines&#10;Press Enter for line breaks"></textarea>
         </div>
 
         <div class="form-row">
@@ -125,6 +125,23 @@
         <h2>Console Output</h2>
         <div id="console" class="console"></div>
         <button id="clearConsole" class="btn-secondary btn-small">Clear Console</button>
+      </section>
+
+      <!-- Sent Messages Section -->
+      <section class="sent-messages-section">
+        <div class="section-header">
+          <h2>Sent Messages</h2>
+          <button id="refreshSentMessages" class="btn-secondary btn-small">🔄 Refresh</button>
+        </div>
+        <div class="sent-messages-controls">
+          <input type="text" id="searchMessages" placeholder="🔍 Search by phone, name, or company...">
+          <div class="message-count">Total: <span id="messageCount">0</span> messages</div>
+        </div>
+        <div id="sentMessagesList" class="sent-messages-list"></div>
+        <div class="sent-messages-actions">
+          <button id="deleteSelected" class="btn-danger btn-small" disabled>🗑️ Delete Selected</button>
+          <button id="exportMessages" class="btn-secondary btn-small">💾 Export as JSON</button>
+        </div>
       </section>
     </div>
 

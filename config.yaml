@@ -1,6 +1,6 @@
-contacts_csv: ./contacts.csv
+contacts_csv: /Users/ariben-elazar/go/src/github.com/abenelazar/whatsapp-node/contacts.csv
 message_template: ""
-image_path: /Users/ariben-elazar/go/src/github.com/abenelazar/whatsapp-automation/lech-lecha.jpg
+image_path: /Users/ariben-elazar/go/src/github.com/abenelazar/whatsapp-node/lech-lecha.jpg
 image_caption: |
   🔥 SHABBAT LECH LECHA – The Journey Begins
 
@@ -12,7 +12,6 @@ image_caption: |
 
   📲 RSVP:
   https://wa.me/15102168856?text=Hi%20Yehouda%2C%20I%20would%20like%20to%20join%20for%20Shabbat%20morning%20Lech%20Lecha
-
 rate_limit: 1
 logging:
   level: info
