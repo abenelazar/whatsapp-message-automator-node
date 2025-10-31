@@ -229,26 +229,7 @@ async function runAutomation(dryRun) {
       mainWindow.webContents.send('automation-log', `Config load warning: ${error.message}\n`);
     }
 
-    // Build environment variables
-    const env = {
-      ...process.env,
-      ELECTRON_RUN_AS_NODE: '1', // Run Electron as Node.js
-      NODE_ENV: 'production', // Ensure production mode
-      NODE_PATH: path.join(basePath, 'node_modules') // Help Node find modules
-    };
-
-    // Only set PUPPETEER_EXECUTABLE_PATH if a custom Chrome path is configured
-    if (chromePath) {
-      env.PUPPETEER_EXECUTABLE_PATH = chromePath;
-    }
-
-    console.log('[AUTOMATION]:', 'NODE_PATH set to:', env.NODE_PATH);
-    mainWindow.webContents.send('automation-log', `NODE_PATH: ${env.NODE_PATH}\n`);
-
-    console.log('[AUTOMATION]:', 'Environment variables set:', Object.keys(env).filter(k => k.startsWith('ELECTRON') || k.startsWith('PUPPETEER') || k.startsWith('NODE')));
-    mainWindow.webContents.send('automation-log', `Spawning process...\n`);
-
-    // Try to find Node.js executable
+    // Try to find Node.js executable FIRST before setting env vars
     let nodeExecutable = process.execPath;
     let useElectron = true;
 
@@ -260,8 +241,8 @@ async function runAutomation(dryRun) {
       await new Promise((resolve, reject) => {
         exec(which, (error, stdout) => {
           if (!error && stdout) {
-            const nodePath = stdout.trim().split('\n')[0]; // Get first result
-            if (nodePath) {
+            const nodePath = stdout.trim().split('\n')[0].trim(); // Get first result and trim
+            if (nodePath && nodePath.length > 0) {
               nodeExecutable = nodePath;
               useElectron = false;
               console.log('[AUTOMATION]:', 'Found Node.js in PATH:', nodePath);
@@ -272,7 +253,7 @@ async function runAutomation(dryRun) {
         });
       });
     } catch (err) {
-      console.log('[AUTOMATION]:', 'Could not find Node.js in PATH');
+      console.log('[AUTOMATION]:', 'Could not find Node.js in PATH:', err.message);
     }
 
     // On Windows, try to find node.exe in common locations if not in PATH
@@ -298,17 +279,50 @@ async function runAutomation(dryRun) {
       }
     }
 
+    // Now build environment variables based on what we found
+    const env = {
+      ...process.env,
+      NODE_ENV: 'production', // Ensure production mode
+      NODE_PATH: path.join(basePath, 'node_modules') // Help Node find modules
+    };
+
     if (useElectron) {
       console.log('[AUTOMATION]:', 'Using Electron as Node.js');
       mainWindow.webContents.send('automation-log', `Using Electron as Node.js\n`);
       env.ELECTRON_RUN_AS_NODE = '1';
     } else {
-      // Don't need ELECTRON_RUN_AS_NODE if using actual Node.js
-      delete env.ELECTRON_RUN_AS_NODE;
+      console.log('[AUTOMATION]:', 'Using system Node.js:', nodeExecutable);
+      mainWindow.webContents.send('automation-log', `Using system Node.js: ${nodeExecutable}\n`);
+      // Don't set ELECTRON_RUN_AS_NODE when using real Node.js
     }
 
+    // Only set PUPPETEER_EXECUTABLE_PATH if a custom Chrome path is configured
+    if (chromePath) {
+      env.PUPPETEER_EXECUTABLE_PATH = chromePath;
+    }
+
+    console.log('[AUTOMATION]:', 'NODE_PATH set to:', env.NODE_PATH);
+    mainWindow.webContents.send('automation-log', `NODE_PATH: ${env.NODE_PATH}\n`);
+
+    console.log('[AUTOMATION]:', 'Environment variables set:', Object.keys(env).filter(k => k.startsWith('ELECTRON') || k.startsWith('PUPPETEER') || k.startsWith('NODE')));
+    mainWindow.webContents.send('automation-log', `Spawning process...\n`);
+
+    // Build arguments for Node.js
+    const nodeArgs = [];
+
+    // When using Electron as Node, we might need to explicitly enable ES modules
+    if (useElectron) {
+      // Try using --es-module-specifier-resolution=node for better ES module support
+      nodeArgs.push('--es-module-specifier-resolution=node');
+    }
+
+    nodeArgs.push(scriptPath, ...args);
+
+    console.log('[AUTOMATION]:', 'Node args:', nodeArgs);
+    mainWindow.webContents.send('automation-log', `Arguments: ${nodeArgs.join(' ')}\n`);
+
     // Spawn the automation process
-    automationProcess = spawn(nodeExecutable, [scriptPath, ...args], {
+    automationProcess = spawn(nodeExecutable, nodeArgs, {
       cwd: basePath,
       env
     });
