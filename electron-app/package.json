@@ -39,6 +39,11 @@
         "filter": ["**/*"]
       },
       {
+        "from": "../node_modules",
+        "to": "app/node_modules",
+        "filter": ["**/*"]
+      },
+      {
         "from": "../config.yaml",
         "to": "app/config.yaml"
       },
