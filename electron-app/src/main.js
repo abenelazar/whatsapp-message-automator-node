@@ -194,6 +194,22 @@ async function runAutomation(dryRun) {
     console.log('[AUTOMATION]:', 'Executable:', process.execPath);
     console.log('[AUTOMATION]:', 'Dry run:', dryRun);
 
+    // Log to UI immediately
+    mainWindow.webContents.send('automation-log', `Starting automation process...\n`);
+    mainWindow.webContents.send('automation-log', `Base path: ${basePath}\n`);
+    mainWindow.webContents.send('automation-log', `Script: ${scriptPath}\n`);
+
+    // Verify script exists
+    try {
+      await fs.promises.access(scriptPath);
+    } catch (error) {
+      const errorMsg = `Script not found at ${scriptPath}`;
+      console.error('[AUTOMATION]:', errorMsg);
+      mainWindow.webContents.send('automation-log', `[ERROR] ${errorMsg}\n`);
+      resolve({ success: false, error: errorMsg });
+      return;
+    }
+
     // Load config to check for custom Chrome path
     let chromePath = undefined; // Let Puppeteer find Chrome/Chromium by default
     try {
@@ -203,23 +219,30 @@ async function runAutomation(dryRun) {
       if (config.chrome_executable_path) {
         chromePath = config.chrome_executable_path;
         console.log('[AUTOMATION]:', 'Using custom Chrome path:', chromePath);
+        mainWindow.webContents.send('automation-log', `Using custom Chrome: ${chromePath}\n`);
       } else {
         console.log('[AUTOMATION]:', 'Using system Chrome/Chromium (auto-detect)');
+        mainWindow.webContents.send('automation-log', `Using system Chrome/Chromium (auto-detect)\n`);
       }
     } catch (error) {
       console.log('[AUTOMATION]:', 'Could not load config, will auto-detect Chrome:', error.message);
+      mainWindow.webContents.send('automation-log', `Config load warning: ${error.message}\n`);
     }
 
     // Build environment variables
     const env = {
       ...process.env,
-      ELECTRON_RUN_AS_NODE: '1' // Run Electron as Node.js
+      ELECTRON_RUN_AS_NODE: '1', // Run Electron as Node.js
+      NODE_ENV: 'production' // Ensure production mode
     };
 
     // Only set PUPPETEER_EXECUTABLE_PATH if a custom Chrome path is configured
     if (chromePath) {
       env.PUPPETEER_EXECUTABLE_PATH = chromePath;
     }
+
+    console.log('[AUTOMATION]:', 'Environment variables set:', Object.keys(env).filter(k => k.startsWith('ELECTRON') || k.startsWith('PUPPETEER') || k.startsWith('NODE')));
+    mainWindow.webContents.send('automation-log', `Spawning process...\n`);
 
     // Use process.execPath to get the bundled Node/Electron executable
     // This ensures the app works when packaged without requiring 'node' in PATH
@@ -253,8 +276,23 @@ async function runAutomation(dryRun) {
 
     automationProcess.on('close', (code) => {
       console.log('[AUTOMATION]:', `Process exited with code ${code}`);
+
+      // If process exits with code 0 but no output, something went wrong
+      if (code === 0 && output.trim().length === 0) {
+        const errorMsg = 'Process exited successfully but produced no output. Check if Node.js modules are correctly bundled.';
+        console.error('[AUTOMATION]:', errorMsg);
+        mainWindow.webContents.send('automation-log', `[ERROR] ${errorMsg}`);
+        mainWindow.webContents.send('automation-complete', { code: 1, output: errorMsg });
+      } else if (code !== 0 && output.trim().length === 0) {
+        const errorMsg = `Process failed with exit code ${code} but produced no output. This might indicate a module loading error.`;
+        console.error('[AUTOMATION]:', errorMsg);
+        mainWindow.webContents.send('automation-log', `[ERROR] ${errorMsg}`);
+        mainWindow.webContents.send('automation-complete', { code, output: errorMsg });
+      } else {
+        mainWindow.webContents.send('automation-complete', { code, output });
+      }
+
       automationProcess = null;
-      mainWindow.webContents.send('automation-complete', { code, output });
     });
 
     resolve({ success: true });
